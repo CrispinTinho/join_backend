@@ -1,5 +1,5 @@
 {
-  "name": "join_att1-facil",
+  "name": "join_att1-facil-backend",
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
