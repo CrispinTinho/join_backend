@@ -1,3 +1,4 @@
+-- /// Fácil ///
 create table cliente (
   id serial primary key,
   nome varchar(255)
@@ -24,3 +25,5 @@ from
 	cliente c
 inner join 
 	pedido p on c.id = p.id_cliente;
+
+

@@ -1,5 +1,19 @@
 ###
 
 
-get http://localhost:3000/compras
+get http://localhost:3000/join_att1
+/// "Facíl"
 
+###
+
+
+
+get http://localhost:3000/join_att2
+/// "Médio"
+
+###
+
+
+
+get http://localhost:3000/join_att3
+/// "Difícil"
