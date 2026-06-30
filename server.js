@@ -17,7 +17,6 @@ const sql = new Pool({
     port: 5432
 })
 
-// RF01 - regras de validação do cadastro
 function validarCadastro(dados) {
     const erros = []
 
