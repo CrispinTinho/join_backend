@@ -1,19 +1,19 @@
-###
+### 
+POST http://localhost:3000/usuarios
+Content-Type: application/json
 
-
-get http://localhost:3000/join_att1
-/// "Facíl"
-
-###
-
-
-
-get http://localhost:3000/join_att2
-/// "Médio"
+{
+  "nome_completo": "lucas ventura",
+  "email": "lucas@email.com",
+  "senha": "12345678"
+}
 
 ###
+POST http://localhost:3000/usuarios
+Content-Type: application/json
 
-
-
-get http://localhost:3000/join_att3
-/// "Difícil"
+{
+  "nome_completo": "lucas",
+  "email": "lucas-email",
+  "senha": "123"
+}

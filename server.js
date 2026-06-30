@@ -1,6 +1,7 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import { Pool } from 'pg'
+import bcrypt from 'bcryptjs'
 
 const servidor = Fastify()
 
@@ -8,77 +9,70 @@ servidor.register(cors, {
     origin: true
 })
 
-
-const sql1 = new Pool({
+const sql = new Pool({
     user: "postgres",
     password: "senai",
     host: "localhost",
-    database: "join_att1",
+    database: "projeto_kanban",
     port: 5432
 })
 
-servidor.get('/join_att1', async (request, reply) => {
-    const resultado = await sql1.query(
-`select
-  c.nome as pessoa,
-  p.item,
-  p.valor as preco
-from 
-  cliente c
-inner join 
-  pedido p on c.id = p.id_cliente;`
-)
-    return resultado.rows
-})
+// RF01 - regras de validação do cadastro
+function validarCadastro(dados) {
+    const erros = []
 
-const sql2 = new Pool({
-    user: "postgres",
-    password: "senai",
-    host: "localhost",
-    database: "join_att2",
-    port: 5432
-})
+    const nomes = (dados.nome_completo || '').trim().split(/\s+/).filter(Boolean)
+    if (nomes.length < 2) {
+        erros.push('o nome completo precisa ter no mínimo nome e sobrenome')
+    }
 
-servidor.get('/join_att2', async (request, reply) => {
-    const resultado = await sql2.query(
-`select
-  p.nome as produto,
-  c.nome as categoria,
-  p.preco_custo,
-  p.preco_venda
-from 
-  produto p
-inner join 
-  categoria c on c.id = p.id_categoria;`
-)
-    return resultado.rows
-})
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!regexEmail.test(dados.email || '')) {
+        erros.push('e-mail inválido, use o formato nome@dominio.com')
+    }
 
-const sql3 = new Pool({
-    user: "postgres",
-    password: "senai",
-    host: "localhost",
-    database: "join_att3",
-    port: 5432
-})
+    if (!dados.senha || dados.senha.length < 8) {
+        erros.push('a senha precisa ter no mínimo 8 caracteres')
+    }
 
-servidor.get('/join_att3', async (request, reply) => {
-    const resultado = await sql3.query(
-`select 
-  c.nome as nome_cliente,
-  c.data_nascimento,
-  a.servico,
-  a.preco,
-  a.data as data_agendamento,
-  a.horario
-from 
-  agendamento a
-inner join 
-  cliente c on c.id = a.id_cliente;`
-)
-    return resultado.rows
+    return erros
+}
+
+servidor.post('/usuarios', async (request, reply) => {
+    const { nome_completo, email, senha } = request.body || {}
+
+    const erros = validarCadastro({ nome_completo, email, senha })
+    if (erros.length > 0) {
+        reply.status(400)
+        return { sucesso: false, erros }
+    }
+
+    try {
+        const senhaCriptografada = await bcrypt.hash(senha, 10)
+
+        const resultado = await sql.query(
+            `insert into usuario (nome_completo, email, senha)
+             values ($1, $2, $3)
+             returning id, nome_completo, email, criado_em;`,
+            [nome_completo.trim(), email.trim().toLowerCase(), senhaCriptografada]
+        )
+
+        reply.status(201)
+        return { sucesso: true, usuario: resultado.rows[0] }
+
+    } catch (erro) {
+        // codigo 23505 = violação de unique (email repetido)
+        if (erro.code === '23505') {
+            reply.status(409)
+            return { sucesso: false, erros: ['esse e-mail já está cadastrado'] }
+        }
+
+        console.error(erro)
+        reply.status(500)
+        return { sucesso: false, erros: ['erro interno ao cadastrar usuário'] }
+    }
 })
 
 servidor.listen({ port: 3000 }, () => {
-    console.log('server ta ON 😎')
+    console.log('servidor rodando em http://localhost:3000')
 })
